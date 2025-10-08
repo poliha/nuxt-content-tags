@@ -1,0 +1,16 @@
+node_modules
+*.log*
+.nuxt
+.nitro
+.cache
+.output
+.env
+dist
+.DS_Store
+.idea
+.vscode
+*.iml
+
+# Development/Status documents (not for repo)
+STATUS.md
+QUICK_START.md

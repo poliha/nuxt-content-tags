@@ -1,0 +1,75 @@
+{
+  "name": "nuxt-content-tags",
+  "version": "0.1.0",
+  "description": "Zero-config WordPress-like tagging module for Nuxt Content",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/poliha/nuxt-content-tags.git"
+  },
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/types.d.ts",
+      "import": "./dist/module.mjs",
+      "require": "./dist/module.cjs"
+    }
+  },
+  "main": "./dist/module.cjs",
+  "types": "./dist/types.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "prepack": "nuxt-module-build build",
+    "dev": "nuxi dev playground",
+    "dev:build": "nuxi build playground",
+    "dev:prepare": "nuxt-module-build build --stub && nuxt-module-build prepare && nuxi prepare playground",
+    "release": "pnpm run lint && pnpm run test && pnpm run prepack && changelogen --release && pnpm publish && git push --follow-tags",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "test": "vitest run",
+    "test:watch": "vitest watch",
+    "test:types": "vue-tsc --noEmit"
+  },
+  "dependencies": {
+    "@nuxt/kit": "^3.13.0"
+  },
+  "devDependencies": {
+    "@nuxt/content": "^3.6.1",
+    "@nuxt/devtools": "^1.5.0",
+    "@nuxt/eslint-config": "^0.5.0",
+    "@nuxt/module-builder": "^0.8.0",
+    "@nuxt/schema": "^3.13.0",
+    "@nuxt/test-utils": "^3.14.0",
+    "@nuxt/ui": "^3.2.0",
+    "@types/node": "^22.0.0",
+    "changelogen": "^0.5.5",
+    "eslint": "^9.10.0",
+    "nuxt": "^3.13.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0",
+    "vue-tsc": "^2.1.0"
+  },
+  "peerDependencies": {
+    "@nuxt/content": "^3.6.0"
+  },
+  "keywords": [
+    "nuxt",
+    "nuxt-module",
+    "nuxt-content",
+    "tags",
+    "tagging",
+    "wordpress",
+    "content",
+    "seo"
+  ],
+  "author": {
+    "name": "Peter Oliha",
+    "url": "https://oliha.dev"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "packageManager": "pnpm@8.15.5+sha1.a58c038faac410c947dbdb93eb30994037d0fce2"
+}
