@@ -12,6 +12,22 @@ withDefaults(defineProps<Props>(), {
   variant: "subtle",
   size: "md",
 });
+
+const runtimeConfig = useRuntimeConfig();
+const moduleConfig = runtimeConfig.public.contentTags as
+  | {
+      basePath?: string;
+    }
+  | undefined;
+const basePath = moduleConfig?.basePath || "/tags";
+
+function resolveTagPath(slug: string) {
+  if (basePath === "/") {
+    return `/${slug}`;
+  }
+
+  return `${basePath}/${slug}`;
+}
 </script>
 
 <template>
@@ -19,7 +35,7 @@ withDefaults(defineProps<Props>(), {
     :color="tag.color || 'neutral'"
     :variant="variant"
     :size="size"
-    :to="to || `/tags/${tag.slug}`"
+    :to="to || resolveTagPath(tag.slug)"
     class="cursor-pointer hover:scale-105 transition-transform"
   >
     {{ tag.name }}

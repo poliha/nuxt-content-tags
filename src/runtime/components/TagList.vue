@@ -15,6 +15,22 @@ withDefaults(defineProps<Props>(), {
 function isTagWithCount(tag: Tag | TagWithCount): tag is TagWithCount {
   return "count" in tag;
 }
+
+const runtimeConfig = useRuntimeConfig();
+const moduleConfig = runtimeConfig.public.contentTags as
+  | {
+      basePath?: string;
+    }
+  | undefined;
+const basePath = moduleConfig?.basePath || "/tags";
+
+function resolveTagPath(slug: string) {
+  if (basePath === "/") {
+    return `/${slug}`;
+  }
+
+  return `${basePath}/${slug}`;
+}
 </script>
 
 <template>
@@ -24,7 +40,11 @@ function isTagWithCount(tag: Tag | TagWithCount): tag is TagWithCount {
       'flex flex-col gap-2': layout === 'vertical',
     }"
   >
-    <NuxtLink v-for="tag in tags" :key="tag.slug" :to="`/tags/${tag.slug}`">
+    <NuxtLink
+      v-for="tag in tags"
+      :key="tag.slug"
+      :to="resolveTagPath(tag.slug)"
+    >
       <UBadge
         :color="tag.color || 'neutral'"
         variant="subtle"
