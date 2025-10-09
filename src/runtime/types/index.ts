@@ -15,5 +15,6 @@ export interface Article {
   description?: string;
   date?: Date;
   tags?: string[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [key: string]: any;
 }

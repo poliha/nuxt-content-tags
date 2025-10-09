@@ -1,6 +1,8 @@
+<!-- eslint-disable vue/multi-word-component-names -->
 <script setup lang="ts">
 import { useTags } from "../../composables/useTags";
 import type { Tag } from "../../types";
+import type { ModuleOptions } from "../../../module";
 
 const route = useRoute();
 const tagSlug = route.params.slug as string;
@@ -8,12 +10,13 @@ const tagSlug = route.params.slug as string;
 const { getTag, getArticlesByTag, getRelatedTags } = useTags();
 
 const tag = ref<Tag | null>(null);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const articles = ref<any[]>([]);
 const relatedTags = ref<Tag[]>([]);
 const loading = ref(true);
 
 // Get module config
-const config = useRuntimeConfig().public.contentTags;
+const config = useRuntimeConfig().public.contentTags as ModuleOptions;
 
 onMounted(async () => {
   try {
@@ -31,9 +34,11 @@ onMounted(async () => {
     // Load articles with this tag
     const allArticles = await getArticlesByTag(tagSlug);
     // Sort by date (newest first)
-    articles.value = allArticles.sort(
-      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-    );
+    articles.value = allArticles.sort((a, b) => {
+      const dateA = a.date ? new Date(a.date).getTime() : 0;
+      const dateB = b.date ? new Date(b.date).getTime() : 0;
+      return dateB - dateA;
+    });
 
     // Load related tags if enabled
     if (config.pages?.tag?.showRelated) {
@@ -121,7 +126,9 @@ watchEffect(() => {
             :to="article.path"
             class="block p-4 rounded-lg border border-default hover:border-primary transition-colors"
           >
-            <h4 class="font-semibold mb-1">{{ article.title }}</h4>
+            <h4 class="font-semibold mb-1">
+              {{ article.title }}
+            </h4>
             <p v-if="article.description" class="text-sm text-muted">
               {{ article.description }}
             </p>

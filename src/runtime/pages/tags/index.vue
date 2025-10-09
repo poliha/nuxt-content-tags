@@ -1,5 +1,7 @@
+<!-- eslint-disable vue/multi-word-component-names -->
 <script setup lang="ts">
-import { useTags } from "../composables/useTags";
+import { useTags } from "../../composables/useTags";
+import type { ModuleOptions } from "../../../module";
 
 const { tags, loading } = useTags();
 
@@ -12,7 +14,7 @@ const sortedTags = computed(() => {
 });
 
 // Get module config
-const config = useRuntimeConfig().public.contentTags;
+const config = useRuntimeConfig().public.contentTags as ModuleOptions;
 
 useSeoMeta({
   title: config.pages?.index?.title || "Tags",

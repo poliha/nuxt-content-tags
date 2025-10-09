@@ -1,5 +1,5 @@
-import { ref, computed } from "vue";
-import type { Ref, ComputedRef } from "vue";
+import { ref } from "vue";
+import type { Ref } from "vue";
 import type { Tag, TagWithCount, Article } from "../types";
 import {
   getAllTags,
