@@ -14,3 +14,6 @@ dist
 # Development/Status documents (not for repo)
 STATUS.md
 QUICK_START.md
+
+# Generated local content caches
+playground/.data/
