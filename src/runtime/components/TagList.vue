@@ -1,35 +1,35 @@
 <script setup lang="ts">
-import type { Tag, TagWithCount } from "../types";
+import type { Tag, TagWithCount } from '../types'
 
 export interface Props {
-  tags: Tag[] | TagWithCount[];
-  layout?: "horizontal" | "vertical";
-  showCount?: boolean;
+  tags: Tag[] | TagWithCount[]
+  layout?: 'horizontal' | 'vertical'
+  showCount?: boolean
 }
 
 withDefaults(defineProps<Props>(), {
-  layout: "horizontal",
+  layout: 'horizontal',
   showCount: false,
-});
+})
 
 function isTagWithCount(tag: Tag | TagWithCount): tag is TagWithCount {
-  return "count" in tag;
+  return 'count' in tag
 }
 
-const runtimeConfig = useRuntimeConfig();
+const runtimeConfig = useRuntimeConfig()
 const moduleConfig = runtimeConfig.public.contentTags as
   | {
-      basePath?: string;
-    }
-  | undefined;
-const basePath = moduleConfig?.basePath || "/tags";
+    basePath?: string
+  }
+  | undefined
+const basePath = moduleConfig?.basePath || '/tags'
 
 function resolveTagPath(slug: string) {
-  if (basePath === "/") {
-    return `/${slug}`;
+  if (basePath === '/') {
+    return `/${slug}`
   }
 
-  return `${basePath}/${slug}`;
+  return `${basePath}/${slug}`
 }
 </script>
 
@@ -52,7 +52,10 @@ function resolveTagPath(slug: string) {
         class="cursor-pointer hover:scale-105 transition-transform"
       >
         {{ tag.name }}
-        <span v-if="showCount && isTagWithCount(tag)" class="ml-1 opacity-70">
+        <span
+          v-if="showCount && isTagWithCount(tag)"
+          class="ml-1 opacity-70"
+        >
           ({{ tag.count }})
         </span>
       </UBadge>

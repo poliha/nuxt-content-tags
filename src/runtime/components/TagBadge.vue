@@ -1,32 +1,32 @@
 <script setup lang="ts">
-import type { Tag } from "../types";
+import type { Tag } from '../types'
 
 export interface Props {
-  tag: Tag;
-  variant?: "subtle" | "solid" | "outline";
-  size?: "sm" | "md" | "lg";
-  to?: string;
+  tag: Tag
+  variant?: 'subtle' | 'solid' | 'outline'
+  size?: 'sm' | 'md' | 'lg'
+  to?: string
 }
 
 withDefaults(defineProps<Props>(), {
-  variant: "subtle",
-  size: "md",
-});
+  variant: 'subtle',
+  size: 'md',
+})
 
-const runtimeConfig = useRuntimeConfig();
+const runtimeConfig = useRuntimeConfig()
 const moduleConfig = runtimeConfig.public.contentTags as
   | {
-      basePath?: string;
-    }
-  | undefined;
-const basePath = moduleConfig?.basePath || "/tags";
+    basePath?: string
+  }
+  | undefined
+const basePath = moduleConfig?.basePath || '/tags'
 
 function resolveTagPath(slug: string) {
-  if (basePath === "/") {
-    return `/${slug}`;
+  if (basePath === '/') {
+    return `/${slug}`
   }
 
-  return `${basePath}/${slug}`;
+  return `${basePath}/${slug}`
 }
 </script>
 

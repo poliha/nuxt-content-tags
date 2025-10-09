@@ -6,4 +6,4 @@
  * This is auto-imported by Nuxt Content in the consuming application
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-declare function queryCollection(collectionName: string): any;
+declare function queryCollection(collectionName: string): any

@@ -1,25 +1,25 @@
 <!-- eslint-disable vue/multi-word-component-names -->
 <script setup lang="ts">
-import { useTags } from "../../composables/useTags";
-import type { ModuleOptions } from "../../../module";
+import { useTags } from '../../composables/useTags'
+import type { ModuleOptions } from '../../../module'
 
-const { tags, loading } = useTags();
+const { tags, loading } = useTags()
 
 // Sort tags by count (most used first) then by name
 const sortedTags = computed(() => {
   return [...tags.value].sort((a, b) => {
-    if (b.count !== a.count) return b.count - a.count;
-    return a.name.localeCompare(b.name);
-  });
-});
+    if (b.count !== a.count) return b.count - a.count
+    return a.name.localeCompare(b.name)
+  })
+})
 
 // Get module config
-const config = useRuntimeConfig().public.contentTags as ModuleOptions;
+const config = useRuntimeConfig().public.contentTags as ModuleOptions
 
 useSeoMeta({
-  title: config.pages?.index?.title || "Tags",
-  description: config.pages?.index?.description || "Browse content by tags",
-});
+  title: config.pages?.index?.title || 'Tags',
+  description: config.pages?.index?.description || 'Browse content by tags',
+})
 </script>
 
 <template>
@@ -39,8 +39,13 @@ useSeoMeta({
         container: '!pt-0',
       }"
     >
-      <div v-if="loading" class="text-center py-12">
-        <p class="text-muted">Loading tags...</p>
+      <div
+        v-if="loading"
+        class="text-center py-12"
+      >
+        <p class="text-muted">
+          Loading tags...
+        </p>
       </div>
 
       <div
@@ -60,7 +65,10 @@ useSeoMeta({
               <p class="text-sm text-muted mb-2">
                 {{ tag.count }} article{{ tag.count === 1 ? "" : "s" }}
               </p>
-              <p v-if="tag.description" class="text-xs text-muted line-clamp-2">
+              <p
+                v-if="tag.description"
+                class="text-xs text-muted line-clamp-2"
+              >
                 {{ tag.description }}
               </p>
             </div>
@@ -68,8 +76,13 @@ useSeoMeta({
         </NuxtLink>
       </div>
 
-      <div v-else class="text-center py-12">
-        <p class="text-muted">No tags found</p>
+      <div
+        v-else
+        class="text-center py-12"
+      >
+        <p class="text-muted">
+          No tags found
+        </p>
       </div>
     </UPageSection>
   </UPage>
