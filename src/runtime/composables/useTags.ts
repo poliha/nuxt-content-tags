@@ -1,6 +1,6 @@
 import { computed } from 'vue'
 import type { Ref } from 'vue'
-import type { Tag, TagWithCount, Article } from '../types'
+import type { Tag, TagWithCount, Article, ArticleFilter } from '../types'
 import {
   getAllTags,
   getTagBySlug,
@@ -9,6 +9,15 @@ import {
   getRelatedTags,
 } from '../utils/tags'
 import { useAsyncData } from '#imports'
+
+export interface UseTagsOptions {
+  /**
+   * Restrict which articles are counted and listed. Applies to every query the
+   * composable makes, so tag pages stay consistent with the rest of the site
+   * (e.g. hiding future-dated posts in production).
+   */
+  filter?: ArticleFilter
+}
 
 export interface UseTagsReturn {
   tags: Ref<TagWithCount[]>
@@ -36,10 +45,15 @@ export interface UseTagsReturn {
  * Call it from a setup context (component `<script setup>`, plugin, or route
  * middleware), as with any Nuxt data composable.
  */
-export function useTags(collectionName: string = 'articles'): UseTagsReturn {
+export function useTags(
+  collectionName: string = 'articles',
+  options: UseTagsOptions = {},
+): UseTagsReturn {
+  const { filter } = options
+
   const { data, status, error, refresh } = useAsyncData(
     `content-tags:${collectionName}`,
-    () => getTagsWithCount(collectionName),
+    () => getTagsWithCount(collectionName, filter),
     { default: () => [] as TagWithCount[] },
   )
 
@@ -59,8 +73,8 @@ export function useTags(collectionName: string = 'articles'): UseTagsReturn {
         .filter((tag): tag is Tag => tag !== undefined)
     },
     getArticlesByTag: (tagSlug: string, collection = collectionName) =>
-      getArticlesByTag(tagSlug, collection),
+      getArticlesByTag(tagSlug, collection, filter),
     getRelatedTags: (tagSlug: string, limit = 5, collection = collectionName) =>
-      getRelatedTags(tagSlug, limit, collection),
+      getRelatedTags(tagSlug, limit, collection, filter),
   }
 }

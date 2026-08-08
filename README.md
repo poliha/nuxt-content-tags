@@ -206,9 +206,37 @@ const {
   getTagsByArticle, // (article: Article) => Promise<Tag[]>
   getArticlesByTag, // (tagSlug: string) => Promise<Article[]>
   getRelatedTags, // (tagSlug: string, limit?) => Promise<Tag[]>
+  refresh,        // () => Promise<void>
 } = useTags()
 </script>
 ```
+
+Tags are fetched with `useAsyncData`, so they render during SSR and arrive in the
+payload rather than being refetched on hydration. Call `useTags` from a setup
+context, as with any Nuxt data composable.
+
+#### Limiting which articles count
+
+If your site only publishes part of a collection -- drafts hidden, future-dated
+posts held back until their date -- pass a `filter` so tag pages and counts match
+the rest of the site:
+
+```vue
+<script setup>
+const config = useRuntimeConfig()
+
+const { tags } = useTags('articles', {
+  filter: (article) => {
+    if (config.public.siteEnv !== 'production') return true
+    return !article.date || new Date(article.date) <= new Date()
+  },
+})
+</script>
+```
+
+The filter applies to every query the composable makes, so counts, tag listings,
+and related tags all agree. The underlying utilities take it as a trailing
+argument too: `getArticlesByTag(slug, collection, filter)`.
 
 ## Development
 

@@ -1,4 +1,15 @@
-import type { Tag, TagWithCount, Article } from '../types'
+import type { Tag, TagWithCount, Article, ArticleFilter } from '../types'
+
+/**
+ * Apply a consumer-supplied filter, if any.
+ *
+ * Consumers often expose a subset of a collection (drafts hidden, future-dated
+ * posts held back until their publish date). Without this, tag pages and counts
+ * would surface articles the rest of the site does not.
+ */
+function applyFilter(articles: Article[], filter?: ArticleFilter): Article[] {
+  return filter ? articles.filter(filter) : articles
+}
 
 /**
  * Get all unique tags from content with their metadata
@@ -28,10 +39,11 @@ export async function getTagBySlug(slug: string): Promise<Tag | null> {
 export async function getArticlesByTag(
   tagSlug: string,
   collectionName: string = 'articles',
+  filter?: ArticleFilter,
 ): Promise<Article[]> {
   try {
     const articles = await queryCollection(collectionName).all()
-    return articles.filter(
+    return applyFilter(articles, filter).filter(
       (article: Article) =>
         article.tags && article.tags.some((tag: string) => tag === tagSlug),
     )
@@ -47,12 +59,13 @@ export async function getArticlesByTag(
  */
 export async function getTagsWithCount(
   collectionName: string = 'articles',
+  filter?: ArticleFilter,
 ): Promise<TagWithCount[]> {
   let articles: Article[] = []
   const tags = await getAllTags()
 
   try {
-    articles = await queryCollection(collectionName).all()
+    articles = applyFilter(await queryCollection(collectionName).all(), filter)
   }
   catch (e) {
     console.warn(`[nuxt-content-tags] Could not query "${collectionName}" collection. Make sure you have an "${collectionName}" collection defined in your content.config.ts.`, e)
@@ -86,8 +99,9 @@ export async function getRelatedTags(
   tagSlug: string,
   limit: number = 5,
   collectionName: string = 'articles',
+  filter?: ArticleFilter,
 ): Promise<Tag[]> {
-  const articles = await getArticlesByTag(tagSlug, collectionName)
+  const articles = await getArticlesByTag(tagSlug, collectionName, filter)
   const relatedTagSlugs = new Map<string, number>()
 
   // Count co-occurring tags
