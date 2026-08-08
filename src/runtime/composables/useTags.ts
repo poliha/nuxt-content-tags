@@ -1,4 +1,4 @@
-import { ref } from 'vue'
+import { computed } from 'vue'
 import type { Ref } from 'vue'
 import type { Tag, TagWithCount, Article } from '../types'
 import {
@@ -8,11 +8,13 @@ import {
   getTagsWithCount,
   getRelatedTags,
 } from '../utils/tags'
+import { useAsyncData } from '#imports'
 
 export interface UseTagsReturn {
   tags: Ref<TagWithCount[]>
   loading: Ref<boolean>
   error: Ref<Error | null>
+  refresh: () => Promise<void>
   getTag: (slug: string) => Promise<Tag | null>
   getTagsByArticle: (article: Article) => Promise<Tag[]>
   getArticlesByTag: (
@@ -27,36 +29,27 @@ export interface UseTagsReturn {
 }
 
 /**
- * Composable for managing tags
+ * Composable for managing tags.
+ *
+ * The tag list is fetched through `useAsyncData`, so it resolves during SSR and
+ * is transferred to the client in the payload rather than refetched on hydration.
+ * Call it from a setup context (component `<script setup>`, plugin, or route
+ * middleware), as with any Nuxt data composable.
  */
 export function useTags(collectionName: string = 'articles'): UseTagsReturn {
-  const tags = ref<TagWithCount[]>([])
-  const loading = ref(false)
-  const error = ref<Error | null>(null)
-
-  // Load tags on init
-  const loadTags = async () => {
-    try {
-      loading.value = true
-      error.value = null
-      tags.value = await getTagsWithCount(collectionName)
-    }
-    catch (e) {
-      error.value = e as Error
-      console.error('[useTags] Error loading tags:', e)
-    }
-    finally {
-      loading.value = false
-    }
-  }
-
-  // Load tags immediately
-  loadTags()
+  const { data, status, error, refresh } = useAsyncData(
+    `content-tags:${collectionName}`,
+    () => getTagsWithCount(collectionName),
+    { default: () => [] as TagWithCount[] },
+  )
 
   return {
-    tags,
-    loading,
-    error,
+    tags: data as Ref<TagWithCount[]>,
+    loading: computed(() => status.value === 'pending'),
+    error: computed(() => (error.value as Error | null) ?? null),
+    refresh: async () => {
+      await refresh()
+    },
     getTag: getTagBySlug,
     getTagsByArticle: async (article: Article) => {
       if (!article.tags) return []

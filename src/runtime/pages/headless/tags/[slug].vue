@@ -1,77 +1,69 @@
 <!-- eslint-disable vue/multi-word-component-names -->
 <script setup lang="ts">
-import { useTags } from '../../../composables/useTags'
-import type { Tag } from '../../../types'
+import {
+  getTagBySlug,
+  getArticlesByTag,
+  getRelatedTags,
+} from '../../../utils/tags'
 import type { ModuleOptions } from '../../../../module'
 
 const route = useRoute()
 const tagSlug = route.params.slug as string
 
-const { getTag, getArticlesByTag, getRelatedTags } = useTags()
-
-const tag = ref<Tag | null>(null)
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const articles = ref<any[]>([])
-const relatedTags = ref<Tag[]>([])
-const loading = ref(true)
-
 // Get module config
 const config = useRuntimeConfig().public.contentTags as ModuleOptions
 
-onMounted(async () => {
-  try {
-    // Load tag metadata
-    tag.value = await getTag(tagSlug)
+// Fetched through useAsyncData so the page renders server-side
+const { data } = await useAsyncData(`content-tags:tag:${tagSlug}`, async () => {
+  const tag = await getTagBySlug(tagSlug)
+  if (!tag) return null
 
-    if (!tag.value) {
-      throw createError({
-        statusCode: 404,
-        statusMessage: 'Tag not found',
-        fatal: true,
-      })
-    }
+  // Sort by date (newest first)
+  const articles = (await getArticlesByTag(tagSlug)).sort((a, b) => {
+    const dateA = a.date ? new Date(a.date).getTime() : 0
+    const dateB = b.date ? new Date(b.date).getTime() : 0
+    return dateB - dateA
+  })
 
-    // Load articles with this tag
-    const allArticles = await getArticlesByTag(tagSlug)
-    // Sort by date (newest first)
-    articles.value = allArticles.sort((a, b) => {
-      const dateA = a.date ? new Date(a.date).getTime() : 0
-      const dateB = b.date ? new Date(b.date).getTime() : 0
-      return dateB - dateA
-    })
+  const relatedTags = config.pages?.tag?.showRelated
+    ? await getRelatedTags(tagSlug, config.pages?.tag?.relatedLimit || 5)
+    : []
 
-    // Load related tags if enabled
-    if (config.pages?.tag?.showRelated) {
-      const limit = config.pages?.tag?.relatedLimit || 5
-      relatedTags.value = await getRelatedTags(tagSlug, limit)
-    }
-  }
-  finally {
-    loading.value = false
-  }
+  return { tag, articles, relatedTags }
 })
 
-// SEO
-watchEffect(() => {
-  if (!tag.value) return
-
-  const titleTemplate = config.pages?.tag?.titleTemplate || '%s - Tags'
-  const title = titleTemplate.replace('%s', tag.value.name)
-
-  useSeoMeta({
-    title,
-    description:
-      tag.value.description || `Articles tagged with ${tag.value.name}`,
-    ogTitle: title,
-    ogDescription:
-      tag.value.description || `Articles tagged with ${tag.value.name}`,
+if (!data.value) {
+  throw createError({
+    statusCode: 404,
+    statusMessage: 'Tag not found',
+    fatal: true,
   })
+}
+
+const tag = computed(() => data.value?.tag)
+const articles = computed(() => data.value?.articles ?? [])
+const relatedTags = computed(() => data.value?.relatedTags ?? [])
+
+// SEO
+const titleTemplate = config.pages?.tag?.titleTemplate || '%s - Tags'
+const title = computed(() =>
+  titleTemplate.replace('%s', tag.value?.name || ''),
+)
+const description = computed(
+  () => tag.value?.description || `Articles tagged with ${tag.value?.name}`,
+)
+
+useSeoMeta({
+  title,
+  description,
+  ogTitle: title,
+  ogDescription: description,
 })
 </script>
 
 <template>
   <div
-    v-if="tag && !loading"
+    v-if="tag"
     class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12"
   >
     <div class="mb-8">
@@ -163,14 +155,5 @@ watchEffect(() => {
         View all tags
       </NuxtLink>
     </div>
-  </div>
-
-  <div
-    v-else-if="loading"
-    class="text-center py-12"
-  >
-    <p class="text-gray-500 dark:text-gray-400">
-      Loading...
-    </p>
   </div>
 </template>

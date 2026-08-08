@@ -28,26 +28,51 @@ describe('nuxt-content-tags', async () => {
       expect(html).not.toContain('UPage')
       expect(html).not.toContain('UPageHero')
     })
+
+    it('renders tag data server-side, not a loading state', async () => {
+      const html = await $fetch('/tags')
+      expect(html).not.toContain('Loading tags...')
+      expect(html).toContain('Nuxt')
+      expect(html).toContain('Testing')
+      // nuxt tag has 2 articles, testing has 1
+      expect(html).toContain('2 articles')
+      expect(html).toContain('1 article')
+    })
   })
 
   describe('individual tag page', () => {
-    it('renders a tag page with loading state for SSR', async () => {
-      // Tag detail pages use onMounted for data loading,
-      // so SSR renders the loading state
+    it('renders tag metadata server-side', async () => {
       const html = await $fetch('/tags/nuxt')
-      expect(html).toContain('Loading...')
+      expect(html).not.toContain('Loading...')
+      expect(html).toContain('Nuxt framework articles')
     })
 
-    it('returns 404 for nonexistent tag', async () => {
-      try {
-        await $fetch('/tags/nonexistent')
-      }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      catch (error: any) {
-        // Page renders loading state, 404 is thrown client-side
-        // via createError in onMounted
-        expect(error).toBeDefined()
-      }
+    it('renders tagged articles server-side, newest first', async () => {
+      const html = (await $fetch('/tags/nuxt')) as string
+      expect(html).toContain('Test Article')
+      expect(html).toContain('Second Article')
+      // Second Article (2025-11-01) is newer than Test Article (2025-10-01)
+      expect(html.indexOf('Second Article')).toBeLessThan(
+        html.indexOf('Test Article'),
+      )
+    })
+
+    it('renders related tags server-side', async () => {
+      // Both tags appear on test-article.md, so testing is related to nuxt
+      const html = await $fetch('/tags/nuxt')
+      expect(html).toContain('Related Tags')
+      expect(html).toContain('/tags/testing')
+    })
+
+    it('sets the tag title in SSR head', async () => {
+      const html = await $fetch('/tags/nuxt')
+      expect(html).toContain('<title>Nuxt - Tags</title>')
+    })
+
+    it('returns a 404 status for a nonexistent tag', async () => {
+      await expect($fetch('/tags/nonexistent')).rejects.toMatchObject({
+        statusCode: 404,
+      })
     })
   })
 
