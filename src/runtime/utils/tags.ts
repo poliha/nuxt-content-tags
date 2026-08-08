@@ -4,8 +4,14 @@ import type { Tag, TagWithCount, Article } from '../types'
  * Get all unique tags from content with their metadata
  */
 export async function getAllTags(): Promise<Tag[]> {
-  const tagsCollection = await queryCollection('tags').all()
-  return tagsCollection || []
+  try {
+    const tagsCollection = await queryCollection('tags').all()
+    return tagsCollection || []
+  }
+  catch (e) {
+    console.warn('[nuxt-content-tags] Could not query "tags" collection. Make sure you have a "tags" collection defined in your content.config.ts.', e)
+    return []
+  }
 }
 
 /**
@@ -23,11 +29,17 @@ export async function getArticlesByTag(
   tagSlug: string,
   collectionName: string = 'articles',
 ): Promise<Article[]> {
-  const articles = await queryCollection(collectionName).all()
-  return articles.filter(
-    (article: Article) =>
-      article.tags && article.tags.some((tag: string) => tag === tagSlug),
-  )
+  try {
+    const articles = await queryCollection(collectionName).all()
+    return articles.filter(
+      (article: Article) =>
+        article.tags && article.tags.some((tag: string) => tag === tagSlug),
+    )
+  }
+  catch (e) {
+    console.warn(`[nuxt-content-tags] Could not query "${collectionName}" collection. Make sure you have an "${collectionName}" collection defined in your content.config.ts.`, e)
+    return []
+  }
 }
 
 /**
@@ -36,10 +48,16 @@ export async function getArticlesByTag(
 export async function getTagsWithCount(
   collectionName: string = 'articles',
 ): Promise<TagWithCount[]> {
-  const [tags, articles] = await Promise.all([
-    getAllTags(),
-    queryCollection(collectionName).all(),
-  ])
+  let articles: Article[] = []
+  const tags = await getAllTags()
+
+  try {
+    articles = await queryCollection(collectionName).all()
+  }
+  catch (e) {
+    console.warn(`[nuxt-content-tags] Could not query "${collectionName}" collection. Make sure you have an "${collectionName}" collection defined in your content.config.ts.`, e)
+    return []
+  }
 
   const tagCountMap = new Map<string, number>()
 

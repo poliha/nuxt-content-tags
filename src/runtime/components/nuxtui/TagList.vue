@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Tag, TagWithCount } from '../types'
+import type { Tag, TagWithCount } from '../../types'
 
 export interface Props {
   tags: Tag[] | TagWithCount[]
