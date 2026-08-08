@@ -1,4 +1,17 @@
+// Imported explicitly rather than relying on auto-imports: Nuxt does not inject
+// auto-imports into node_modules, so a bare `queryCollection` works in this
+// repo's fixtures but throws once the module is installed as a package.
 import type { Tag, TagWithCount, Article, ArticleFilter } from '../types'
+import { queryCollection as appQueryCollection } from '#imports'
+
+/**
+ * `queryCollection` is typed against the host app's own collections, while this
+ * module is generic over collection names, so it goes through a widened
+ * signature. Callers narrow the result to Tag/Article themselves.
+ */
+const queryCollection = appQueryCollection as unknown as (
+  collection: string,
+) => { all: () => Promise<Record<string, unknown>[]> }
 
 /**
  * Apply a consumer-supplied filter, if any.
@@ -17,7 +30,7 @@ function applyFilter(articles: Article[], filter?: ArticleFilter): Article[] {
 export async function getAllTags(): Promise<Tag[]> {
   try {
     const tagsCollection = await queryCollection('tags').all()
-    return tagsCollection || []
+    return (tagsCollection || []) as unknown as Tag[]
   }
   catch (e) {
     console.warn('[nuxt-content-tags] Could not query "tags" collection. Make sure you have a "tags" collection defined in your content.config.ts.', e)
@@ -42,7 +55,7 @@ export async function getArticlesByTag(
   filter?: ArticleFilter,
 ): Promise<Article[]> {
   try {
-    const articles = await queryCollection(collectionName).all()
+    const articles = (await queryCollection(collectionName).all()) as unknown as Article[]
     return applyFilter(articles, filter).filter(
       (article: Article) =>
         article.tags && article.tags.some((tag: string) => tag === tagSlug),
@@ -65,7 +78,10 @@ export async function getTagsWithCount(
   const tags = await getAllTags()
 
   try {
-    articles = applyFilter(await queryCollection(collectionName).all(), filter)
+    articles = applyFilter(
+      (await queryCollection(collectionName).all()) as unknown as Article[],
+      filter,
+    )
   }
   catch (e) {
     console.warn(`[nuxt-content-tags] Could not query "${collectionName}" collection. Make sure you have an "${collectionName}" collection defined in your content.config.ts.`, e)

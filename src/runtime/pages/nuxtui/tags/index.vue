@@ -1,7 +1,9 @@
 <!-- eslint-disable vue/multi-word-component-names -->
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useTags } from '../../../composables/useTags'
 import type { ModuleOptions } from '../../../../module'
+import { useRuntimeConfig, useSeoMeta } from '#imports'
 
 const { tags, loading } = useTags()
 

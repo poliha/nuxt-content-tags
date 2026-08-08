@@ -11,6 +11,7 @@
   "exclude": [
     "dist",
     "node_modules",
+    "nuxt.config.ts",
     "playground",
     "test/fixtures"
   ]

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { Tag } from '../../types'
+import { useRuntimeConfig } from '#imports'
 
 export interface Props {
   tag: Tag

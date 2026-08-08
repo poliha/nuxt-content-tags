@@ -1,11 +1,19 @@
 <!-- eslint-disable vue/multi-word-component-names -->
 <script setup lang="ts">
+import { computed } from 'vue'
 import {
   getTagBySlug,
   getArticlesByTag,
   getRelatedTags,
 } from '../../../utils/tags'
 import type { ModuleOptions } from '../../../../module'
+import {
+  createError,
+  useAsyncData,
+  useRoute,
+  useRuntimeConfig,
+  useSeoMeta,
+} from '#imports'
 
 const route = useRoute()
 const tagSlug = route.params.slug as string

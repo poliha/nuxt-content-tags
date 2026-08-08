@@ -1,10 +1,11 @@
-import { describe, it, expect, vi, afterEach } from 'vitest'
+import { describe, it, expect, afterEach } from 'vitest'
 import {
   getArticlesByTag,
   getTagsWithCount,
   getRelatedTags,
 } from '../src/runtime/utils/tags'
 import type { Article } from '../src/runtime/types'
+import { setCollections, resetCollections } from './stubs/imports'
 
 const tags = [
   { name: 'Nuxt', slug: 'nuxt' },
@@ -17,7 +18,7 @@ const articles: Article[] = [
 ]
 
 function stubCollections() {
-  vi.stubGlobal('queryCollection', (name: string) => ({
+  setCollections((name: string) => ({
     all: async () => (name === 'tags' ? tags : articles),
   }))
 }
@@ -27,7 +28,7 @@ const publishedOnly = (article: Article) => article.draft !== true
 
 describe('article filter', () => {
   afterEach(() => {
-    vi.unstubAllGlobals()
+    resetCollections()
   })
 
   describe('getArticlesByTag', () => {

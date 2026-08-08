@@ -34,6 +34,13 @@ function withTrailingSlash(path: string) {
   return `${path}/`
 }
 
+export type {
+  Tag,
+  TagWithCount,
+  Article,
+  ArticleFilter,
+} from './runtime/types'
+
 export interface ModuleOptions {
   /**
    * Enable/disable the module
