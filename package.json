@@ -10,13 +10,12 @@
   "type": "module",
   "exports": {
     ".": {
-      "types": "./dist/types.d.ts",
+      "types": "./dist/types.d.mts",
       "import": "./dist/module.mjs",
       "require": "./dist/module.cjs"
     }
   },
   "main": "./dist/module.cjs",
-  "types": "./dist/types.d.ts",
   "files": [
     "dist"
   ],
@@ -33,30 +32,33 @@
     "test:types": "vue-tsc --noEmit"
   },
   "dependencies": {
-    "@nuxt/kit": "^3.13.0",
-    "better-sqlite3": "^12.4.1"
+    "@nuxt/kit": ">=3.13.0"
   },
   "devDependencies": {
     "@nuxt/content": "^3.6.1",
     "@nuxt/devtools": "^1.5.0",
     "@nuxt/eslint-config": "^0.5.7",
-    "@nuxt/module-builder": "^0.8.0",
+    "@nuxt/module-builder": "^1.0.0",
     "@nuxt/schema": "^3.13.0",
     "@nuxt/test-utils": "^3.14.0",
     "@nuxt/ui": "^3.2.0",
-    "@oxc-minify/binding-linux-x64-gnu": "^0.94.0",
-    "@oxc-parser/binding-linux-x64-gnu": "^0.94.0",
-    "@oxc-transform/binding-linux-x64-gnu": "^0.94.0",
     "@types/node": "^22.0.0",
+    "better-sqlite3": "^12.6.2",
     "changelogen": "^0.5.5",
     "eslint": "^9.37.0",
-    "nuxt": "^3.13.0",
+    "nuxt": "^3.17.0",
     "typescript": "^5.6.0",
-    "vitest": "^2.1.0",
+    "vitest": "^3.0.0",
     "vue-tsc": "^2.1.0"
   },
   "peerDependencies": {
-    "@nuxt/content": "^3.6.0"
+    "@nuxt/content": ">=3.6.0",
+    "@nuxt/ui": ">=3.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@nuxt/ui": {
+      "optional": true
+    }
   },
   "keywords": [
     "nuxt",
@@ -75,5 +77,13 @@
   "publishConfig": {
     "access": "public"
   },
-  "packageManager": "pnpm@8.15.5+sha1.a58c038faac410c947dbdb93eb30994037d0fce2"
+  "packageManager": "pnpm@10.28.2",
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "better-sqlite3",
+      "esbuild",
+      "@parcel/watcher",
+      "unrs-resolver"
+    ]
+  }
 }

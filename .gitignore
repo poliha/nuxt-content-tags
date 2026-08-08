@@ -11,9 +11,14 @@ dist
 .vscode
 *.iml
 
-# Development/Status documents (not for repo)
-STATUS.md
-QUICK_START.md
+# Internal development docs (not for repo)
+internal/
+internal
 
 # Generated local content caches
 playground/.data/
+test/fixtures/**/.data/
+test/fixtures/**/.nuxt/
+
+# Playwright MCP artifacts
+.playwright-mcp/
