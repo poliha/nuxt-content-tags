@@ -22,3 +22,6 @@ test/fixtures/**/.nuxt/
 
 # Playwright MCP artifacts
 .playwright-mcp/
+
+# Packed tarballs from pnpm pack
+*.tgz
