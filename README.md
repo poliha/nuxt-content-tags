@@ -7,36 +7,35 @@
 [![License][license-src]][license-href]
 [![Nuxt][nuxt-src]][nuxt-href]
 
-## ✨ Features
+## Features
 
-- 🎯 **Zero-config** - Works out of the box with sensible defaults
-- 🏷️ **WordPress-like** - Familiar tagging experience for WordPress migrators
-- 📄 **Auto-generated pages** - Tag index and individual tag pages created automatically
-- 🔗 **Related tags** - Smart co-occurrence analysis for content discovery
-- 🎨 **Nuxt UI ready** - Beautiful components with Nuxt UI integration
-- 🚀 **SEO optimized** - Proper meta tags and structured data
-- 📱 **Responsive** - Mobile-first design out of the box
-- ⚡ **Performance** - Optimized for fast builds and runtime
-- 🔧 **TypeScript** - Full type safety and IntelliSense support
+- **Zero-config** -- Works out of the box with sensible defaults
+- **WordPress-like** -- Familiar tagging experience for WordPress migrators
+- **Auto-generated pages** -- Tag index and individual tag pages created automatically
+- **Related tags** -- Smart co-occurrence analysis for content discovery
+- **Headless or Nuxt UI** -- Auto-detects Nuxt UI, falls back to plain HTML + Tailwind
+- **SEO optimized** -- Proper meta tags and structured data
+- **Nuxt 3 + 4** -- Compatible with both major versions
+- **TypeScript** -- Full type safety and IntelliSense support
 
-## 🎬 Quick Setup
+## Requirements
 
-1. Add `nuxt-content-tags` dependency to your project
+- Nuxt `>=3.0.0`
+- `@nuxt/content` `>=3.6.0`
+- `@nuxt/ui` `>=3.0.0` (optional -- enhanced styling when present)
+
+## Quick Setup
+
+### 1. Install the module
 
 ```bash
-# Using pnpm
 pnpm add -D nuxt-content-tags
-
-# Using yarn
-yarn add --dev nuxt-content-tags
-
-# Using npm
-npm install --save-dev nuxt-content-tags
 ```
 
-2. Add `nuxt-content-tags` to the `modules` section of `nuxt.config.ts`
+### 2. Add to your Nuxt config
 
-```js
+```ts
+// nuxt.config.ts
 export default defineNuxtConfig({
   modules: [
     '@nuxt/content',
@@ -45,50 +44,84 @@ export default defineNuxtConfig({
 })
 ```
 
-That's it! The module will auto-detect tags in your content and generate tag pages at `/tags` 🎉
+### 3. Define your content collections
 
-## 📖 Documentation
+This is the critical step. You need `tags` and `articles` collections in your `content.config.ts`:
 
-### Content Structure
+```ts
+// content.config.ts
+import { defineCollection, defineContentConfig, z } from '@nuxt/content'
 
-Create individual tag files in `/content/tags/`:
+export default defineContentConfig({
+  collections: {
+    articles: defineCollection({
+      type: 'page',
+      source: 'articles/*.md',
+      schema: z.object({
+        title: z.string(),
+        description: z.string().optional(),
+        date: z.date().optional(),
+        tags: z.array(z.string()).optional(),
+      }),
+    }),
+    tags: defineCollection({
+      type: 'data',
+      source: 'tags/*.yml',
+      schema: z.object({
+        name: z.string(),
+        slug: z.string(),
+        description: z.string().optional(),
+        color: z.string().optional(),
+      }),
+    }),
+  },
+})
+```
+
+### 4. Add content
+
+Create tag files:
 
 ```yaml
 # content/tags/nuxt.yml
-name: 'Nuxt'
-slug: 'nuxt'
-description: 'Articles about the Nuxt framework'
-color: 'green'
+name: "Nuxt"
+slug: "nuxt"
+description: "Articles about the Nuxt framework"
+color: "green"
 ```
 
-Then reference tags in your articles:
+Reference tags in articles:
 
 ```yaml
 ---
-title: 'My Article'
+title: "My Article"
 tags:
   - nuxt
   - typescript
 ---
 ```
 
-### Configuration
+That's it! Tag pages are auto-generated at `/tags`.
 
-While zero-config is the goal, you can customize the module:
+## Configuration
 
-```js
+```ts
 export default defineNuxtConfig({
   modules: ['nuxt-content-tags'],
   contentTags: {
     // Enable/disable the module
     enabled: true,
-    
+
     // Generate tag pages automatically
     generatePages: true,
-    
+
     // Base path for tag pages
     basePath: '/tags',
-    
+
+    // UI variant: 'auto' | 'headless' | 'nuxtui'
+    // 'auto' detects @nuxt/ui and uses it if present
+    ui: 'auto',
+
     // Page configuration
     pages: {
       index: {
@@ -101,7 +134,7 @@ export default defineNuxtConfig({
         relatedLimit: 5
       }
     },
-    
+
     // SEO options
     seo: {
       enabled: true,
@@ -111,77 +144,99 @@ export default defineNuxtConfig({
 })
 ```
 
-### Components
+### UI Option
 
-Use the provided components in your pages:
+The module auto-detects whether `@nuxt/ui` is installed:
+
+- **With Nuxt UI**: Uses `UContainer`, `UCard`, `UBadge`, `UButton`, `ULink` components
+- **Without Nuxt UI**: Uses plain HTML with Tailwind CSS utility classes
+
+You can force a specific variant:
+
+```ts
+contentTags: {
+  ui: 'headless' // Always use plain HTML + Tailwind
+}
+```
+
+## Components
+
+### TagBadge
+
+Display a single tag as a badge with a link.
 
 ```vue
 <template>
-  <div>
-    <!-- Display a single tag -->
-    <TagBadge :tag="tag" variant="subtle" size="md" />
-    
-    <!-- Display multiple tags -->
-    <TagList :tags="tags" layout="horizontal" :show-count="true" />
-  </div>
+  <TagBadge :tag="tag" variant="subtle" size="md" />
 </template>
 ```
 
-### Composables
+**Props:**
+- `tag: Tag` -- Tag object with `name`, `slug`, optional `color`
+- `variant?: 'subtle' | 'solid' | 'outline'` -- Badge style (default: `'subtle'`)
+- `size?: 'sm' | 'md' | 'lg'` -- Badge size (default: `'md'`)
+- `to?: string` -- Override the default tag page link
 
-Use the `useTags` composable to access tag data:
+### TagList
+
+Display multiple tags in a row or column.
+
+```vue
+<template>
+  <TagList :tags="tags" layout="horizontal" :show-count="true" />
+</template>
+```
+
+**Props:**
+- `tags: Tag[] | TagWithCount[]` -- Array of tags
+- `layout?: 'horizontal' | 'vertical'` -- Layout direction (default: `'horizontal'`)
+- `showCount?: boolean` -- Show article count (default: `false`)
+
+## Composables
+
+### useTags
 
 ```vue
 <script setup>
-const { tags, getTag, getArticlesByTag, getRelatedTags } = useTags()
-
-// Get all tags
-const allTags = await tags.value
-
-// Get a specific tag
-const nuxtTag = await getTag('nuxt')
-
-// Get articles with a tag
-const nuxtArticles = await getArticlesByTag('nuxt')
-
-// Get related tags
-const related = await getRelatedTags('nuxt', 5)
+const {
+  tags,           // Ref<TagWithCount[]> - all tags with counts
+  loading,        // Ref<boolean>
+  error,          // Ref<Error | null>
+  getTag,         // (slug: string) => Promise<Tag | null>
+  getTagsByArticle, // (article: Article) => Promise<Tag[]>
+  getArticlesByTag, // (tagSlug: string) => Promise<Article[]>
+  getRelatedTags, // (tagSlug: string, limit?) => Promise<Tag[]>
+} = useTags()
 </script>
 ```
 
-## 🛣️ Roadmap
+## Development
 
-### v1.0 (Current)
-- ✅ Core tag utilities
-- ✅ Basic components (TagBadge, TagList)
-- ✅ Auto-generated tag pages
-- ✅ Related tags functionality
-- ✅ SEO optimization
-- ✅ Nuxt UI integration
+```bash
+# Install dependencies
+pnpm install
 
-### v1.1 (Planned)
-- [ ] TagCloud component
-- [ ] Advanced visualization options
-- [ ] Theme customization
+# Generate type stubs
+pnpm dev:prepare
 
-### v1.2 (Future)
-- [ ] TagFilter component
-- [ ] Analytics integration
-- [ ] Multi-tag filtering
+# Start playground
+pnpm dev
 
-## 🤝 Contributing
+# Run tests
+pnpm test
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+# Lint
+pnpm lint
 
-## 📝 License
+# Build for publishing
+pnpm prepack
+```
+
+## License
 
 [MIT License](./LICENSE)
 
-## 🙏 Credits
-
-Built with ❤️ by [Peter Oliha](https://oliha.dev)
-
-Inspired by WordPress tagging system and the needs of content creators migrating to Nuxt.
+Built by [Peter Oliha](https://oliha.dev)
 
 <!-- Badges -->
 [npm-version-src]: https://img.shields.io/npm/v/nuxt-content-tags/latest.svg?style=flat&colorA=18181B&colorB=28CF8D
@@ -195,15 +250,3 @@ Inspired by WordPress tagging system and the needs of content creators migrating
 
 [nuxt-src]: https://img.shields.io/badge/Nuxt-18181B?logo=nuxt.js
 [nuxt-href]: https://nuxt.com
-
----
-
-## 💬 Feedback Wanted!
-
-This is a new module and we'd love to hear from you:
-
-- What features would you like to see?
-- What problems are you facing with tags in Nuxt Content?
-- How can we make this better?
-
-Please open an issue or discussion on GitHub!
