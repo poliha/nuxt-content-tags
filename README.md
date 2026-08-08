@@ -202,6 +202,7 @@ const {
   tags,           // Ref<TagWithCount[]> - all tags with counts
   loading,        // Ref<boolean>
   error,          // Ref<Error | null>
+  getAllTags,     // () => Promise<Tag[]> - every defined tag, unfiltered
   getTag,         // (slug: string) => Promise<Tag | null>
   getTagsByArticle, // (article: Article) => Promise<Tag[]>
   getArticlesByTag, // (tagSlug: string) => Promise<Article[]>

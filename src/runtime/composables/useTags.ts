@@ -24,6 +24,7 @@ export interface UseTagsReturn {
   loading: Ref<boolean>
   error: Ref<Error | null>
   refresh: () => Promise<void>
+  getAllTags: () => Promise<Tag[]>
   getTag: (slug: string) => Promise<Tag | null>
   getTagsByArticle: (article: Article) => Promise<Tag[]>
   getArticlesByTag: (
@@ -64,6 +65,9 @@ export function useTags(
     refresh: async () => {
       await refresh()
     },
+    // Every defined tag, including ones no article currently uses. `tags` is the
+    // counted, filtered view; this is the raw list for looking up metadata.
+    getAllTags,
     getTag: getTagBySlug,
     getTagsByArticle: async (article: Article) => {
       if (!article.tags) return []
