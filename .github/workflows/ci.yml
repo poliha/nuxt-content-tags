@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches: [development, production]
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install
+      - run: pnpm lint
+      - run: pnpm dev:prepare
+      - run: pnpm test:types
+      - run: pnpm prepack
+
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # The module declares compatibility with nuxt >=3.0.0, so both majors
+        # are exercised rather than assumed.
+        include:
+          - nuxt: ^3.17.0
+            ui: ^3.2.0
+          - nuxt: ^4.4.4
+            ui: ^4.7.1
+    name: test (nuxt ${{ matrix.nuxt }})
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install
+      - run: pnpm add -D nuxt@${{ matrix.nuxt }} @nuxt/ui@${{ matrix.ui }}
+      - run: pnpm dev:prepare
+      - run: pnpm test
