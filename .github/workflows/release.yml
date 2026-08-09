@@ -1,0 +1,67 @@
+name: Release
+
+# Publishing to npm stays manual: the account has 2FA, so it needs a one-time
+# code that CI cannot supply. This workflow only creates the GitHub Release once
+# a version tag is pushed, using the notes changelogen wrote into CHANGELOG.md.
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install
+
+      # A tag should never point at something that does not build.
+      - run: pnpm lint
+      - run: pnpm dev:prepare
+      - run: pnpm test
+      - run: pnpm prepack
+
+      - name: Check the tag matches package.json
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          pkg="$(node -p "require('./package.json').version")"
+          if [ "$tag" != "$pkg" ]; then
+            echo "Tag $GITHUB_REF_NAME does not match package.json version $pkg"
+            exit 1
+          fi
+
+      - name: Extract this version's changelog section
+        id: notes
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          # Take everything between this version's heading and the next one
+          awk -v v="$version" '
+            $0 ~ "^## +v?" v "([^0-9]|$)" { found = 1; next }
+            found && /^## / { exit }
+            found { print }
+          ' CHANGELOG.md > release-notes.md
+          if [ ! -s release-notes.md ]; then
+            echo "No CHANGELOG entry found for $version, falling back to generated notes"
+            echo "generated=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "generated=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "${{ steps.notes.outputs.generated }}" = "true" ]; then
+            gh release create "$GITHUB_REF_NAME" --verify-tag --title "$GITHUB_REF_NAME" --generate-notes
+          else
+            gh release create "$GITHUB_REF_NAME" --verify-tag --title "$GITHUB_REF_NAME" --notes-file release-notes.md
+          fi
