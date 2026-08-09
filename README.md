@@ -14,7 +14,8 @@
 - **Auto-generated pages** -- Tag index and individual tag pages created automatically
 - **Related tags** -- Smart co-occurrence analysis for content discovery
 - **Headless or Nuxt UI** -- Auto-detects Nuxt UI, falls back to plain HTML + Tailwind
-- **SEO optimized** -- Proper meta tags and structured data
+- **Server-rendered** -- Tag pages render on the server with titles and meta
+  descriptions set, so crawlers see real content
 - **Nuxt 3 + 4** -- Compatible with both major versions
 - **TypeScript** -- Full type safety and IntelliSense support
 
@@ -23,6 +24,19 @@
 - Nuxt `>=3.0.0`
 - `@nuxt/content` `>=3.6.0`
 - `@nuxt/ui` `>=3.0.0` (optional -- enhanced styling when present)
+
+If you are adding `@nuxt/content` for the first time, it also needs `better-sqlite3`
+to query content locally, and will stop the build with
+`Nuxt Content requires better-sqlite3 module to operate` until it is installed:
+
+```bash
+pnpm add -D better-sqlite3
+```
+
+It compiles a native binding, so pnpm may need permission to run its build script
+(`pnpm approve-builds`, or list it under `pnpm.onlyBuiltDependencies`). This is a
+`@nuxt/content` requirement rather than one of this module's, but it lands during
+setup, so it is worth knowing up front.
 
 ## Quick Setup
 
@@ -46,7 +60,14 @@ export default defineNuxtConfig({
 
 ### 3. Define your content collections
 
-This is the critical step. You need `tags` and `articles` collections in your `content.config.ts`:
+This is the critical step, and the names matter more than you might expect.
+
+- **`tags`** holds the tag definitions. This name is required.
+- **`articles`** holds the content being tagged. The generated pages look for this
+  name specifically. If your collection is called something else, see
+  [Using a different collection name](#using-a-different-collection-name).
+
+Add both to your `content.config.ts`:
 
 ```ts
 // content.config.ts
@@ -103,26 +124,56 @@ tags:
 
 That's it! Tag pages are auto-generated at `/tags`.
 
+### Using a different collection name
+
+The composable and utilities take the collection name as their first argument, so
+any name works when you render tags yourself:
+
+```vue
+<script setup>
+const { tags } = useTags('posts')
+</script>
+```
+
+The **generated pages** are a different story: they call `useTags()` with no
+argument, so they always read a collection named `articles`. If your content lives
+under another name and you want tag pages, set `generatePages: false` and build
+your own using the composable.
+
+Making this configurable is tracked in
+[issue #6](https://github.com/poliha/nuxt-content-tags/issues/6).
+
 ## Configuration
+
+All options live under the `contentTags` key and all are optional. The defaults are
+what you get from the setup above.
+
+| Option | Type | Default | What it does |
+|---|---|---|---|
+| `enabled` | `boolean` | `true` | Set `false` to turn the module off entirely. Nothing is registered. |
+| `generatePages` | `boolean` | `true` | Registers the tag index and tag detail routes. Set `false` to keep the components and composable but own the routes yourself. |
+| `basePath` | `string` | `'/tags'` | Where tag pages live. Leading slash optional, trailing slashes stripped. `'/'` mounts them at the root. |
+| `ui` | `'auto' \| 'headless' \| 'nuxtui'` | `'auto'` | Which component set to use. `'auto'` uses Nuxt UI when it is installed and plain markup otherwise. |
+| `autoDetect` | `boolean` | `true` | Reserved for auto-detecting tags from content. Not yet used. |
+| `pages.index.title` | `string` | `'All Tags'` | Heading and document title on the tag index. |
+| `pages.index.description` | `string` | `'Browse content by tags'` | Sub-heading and meta description on the tag index. |
+| `pages.tag.titleTemplate` | `string` | `'%s - Tags'` | Title for a tag page. `%s` is replaced with the tag name. |
+| `pages.tag.showRelated` | `boolean` | `true` | Show tags that co-occur with the current one. |
+| `pages.tag.relatedLimit` | `number` | `5` | How many related tags to show. |
+| `seo.enabled` | `boolean` | `true` | Reserved for SEO output. Page titles and meta descriptions are set regardless. |
+| `seo.structuredData` | `boolean` | `true` | Reserved for JSON-LD output. Not yet emitted. |
+
+<details>
+<summary>Full config example</summary>
 
 ```ts
 export default defineNuxtConfig({
-  modules: ['nuxt-content-tags'],
+  modules: ['@nuxt/content', 'nuxt-content-tags'],
   contentTags: {
-    // Enable/disable the module
     enabled: true,
-
-    // Generate tag pages automatically
     generatePages: true,
-
-    // Base path for tag pages
     basePath: '/tags',
-
-    // UI variant: 'auto' | 'headless' | 'nuxtui'
-    // 'auto' detects @nuxt/ui and uses it if present
     ui: 'auto',
-
-    // Page configuration
     pages: {
       index: {
         title: 'All Tags',
@@ -134,8 +185,6 @@ export default defineNuxtConfig({
         relatedLimit: 5
       }
     },
-
-    // SEO options
     seo: {
       enabled: true,
       structuredData: true
@@ -143,6 +192,8 @@ export default defineNuxtConfig({
   }
 })
 ```
+
+</details>
 
 ### UI Option
 
@@ -171,11 +222,12 @@ Display a single tag as a badge with a link.
 </template>
 ```
 
-**Props:**
-- `tag: Tag` -- Tag object with `name`, `slug`, optional `color`
-- `variant?: 'subtle' | 'solid' | 'outline'` -- Badge style (default: `'subtle'`)
-- `size?: 'sm' | 'md' | 'lg'` -- Badge size (default: `'md'`)
-- `to?: string` -- Override the default tag page link
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `tag` | `Tag` | required | Tag object with `name`, `slug`, and optional `color` |
+| `variant` | `'subtle' \| 'solid' \| 'outline'` | `'subtle'` | Badge style |
+| `size` | `'sm' \| 'md' \| 'lg'` | `'md'` | Badge size |
+| `to` | `string` | tag page | Override the link target |
 
 ### TagList
 
@@ -187,34 +239,46 @@ Display multiple tags in a row or column.
 </template>
 ```
 
-**Props:**
-- `tags: Tag[] | TagWithCount[]` -- Array of tags
-- `layout?: 'horizontal' | 'vertical'` -- Layout direction (default: `'horizontal'`)
-- `showCount?: boolean` -- Show article count (default: `false`)
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `tags` | `Tag[] \| TagWithCount[]` | required | Tags to render |
+| `layout` | `'horizontal' \| 'vertical'` | `'horizontal'` | Layout direction |
+| `showCount` | `boolean` | `false` | Show article counts. Needs `TagWithCount[]` |
 
 ## Composables
 
 ### useTags
 
-```vue
-<script setup>
-const {
-  tags,           // Ref<TagWithCount[]> - all tags with counts
-  loading,        // Ref<boolean>
-  error,          // Ref<Error | null>
-  getAllTags,     // () => Promise<Tag[]> - every defined tag, unfiltered
-  getTag,         // (slug: string) => Promise<Tag | null>
-  getTagsByArticle, // (article: Article) => Promise<Tag[]>
-  getArticlesByTag, // (tagSlug: string) => Promise<Article[]>
-  getRelatedTags, // (tagSlug: string, limit?) => Promise<Tag[]>
-  refresh,        // () => Promise<void>
-} = useTags()
-</script>
+```ts
+useTags(collection?: string, options?: { filter?: (article: Article) => boolean })
 ```
 
-Tags are fetched with `useAsyncData`, so they render during SSR and arrive in the
+| Argument | Type | Default | Description |
+|---|---|---|---|
+| `collection` | `string` | `'articles'` | Which content collection to count and list |
+| `options.filter` | `(article: Article) => boolean` | none | Restrict which articles count. See below |
+
+Returns:
+
+| Key | Type | Description |
+|---|---|---|
+| `tags` | `Ref<TagWithCount[]>` | Tags that have at least one article, with counts |
+| `loading` | `Ref<boolean>` | True while the underlying request is in flight |
+| `error` | `Ref<Error \| null>` | Error from the tag query, if any |
+| `getAllTags` | `() => Promise<Tag[]>` | Every defined tag, including unused ones, unfiltered |
+| `getTag` | `(slug: string) => Promise<Tag \| null>` | One tag by slug |
+| `getTagsByArticle` | `(article: Article) => Promise<Tag[]>` | Resolve an article's slugs to tag objects |
+| `getArticlesByTag` | `(slug: string, collection?: string) => Promise<Article[]>` | Articles carrying a tag |
+| `getRelatedTags` | `(slug: string, limit?: number, collection?: string) => Promise<Tag[]>` | Tags that co-occur with this one, most frequent first |
+| `refresh` | `() => Promise<void>` | Refetch the tag list |
+
+`tags` is fetched with `useAsyncData`, so it resolves during SSR and arrives in the
 payload rather than being refetched on hydration. Call `useTags` from a setup
 context, as with any Nuxt data composable.
+
+Note that `tags` omits tags with no articles, while `getAllTags` returns every
+defined tag. Use `getAllTags` when mapping an article's slugs to names, so tags
+that are only used by filtered-out articles still resolve.
 
 #### Limiting which articles count
 
@@ -239,26 +303,68 @@ The filter applies to every query the composable makes, so counts, tag listings,
 and related tags all agree. The underlying utilities take it as a trailing
 argument too: `getArticlesByTag(slug, collection, filter)`.
 
-## Development
+## Contributing
+
+Issues and pull requests are welcome. [Open issues](https://github.com/poliha/nuxt-content-tags/issues)
+are the best place to see what is planned or to say what you need.
+
+### Getting set up
 
 ```bash
-# Install dependencies
+git clone https://github.com/poliha/nuxt-content-tags.git
+cd nuxt-content-tags
 pnpm install
+pnpm dev:prepare   # generate type stubs
+pnpm dev           # start the playground
+```
 
-# Generate type stubs
-pnpm dev:prepare
+### Commands
 
-# Start playground
-pnpm dev
+| Command | What it does |
+|---|---|
+| `pnpm dev` | Playground at `localhost:3000`, tag pages at `/tags` |
+| `pnpm dev:prepare` | Regenerate type stubs. Run after changing module options |
+| `pnpm test` | Unit and integration tests |
+| `pnpm test:watch` | Tests in watch mode |
+| `pnpm test:types` | Typecheck with `vue-tsc` |
+| `pnpm lint` / `pnpm lint:fix` | ESLint |
+| `pnpm prepack` | Build `dist/` as it will be published |
 
-# Run tests
-pnpm test
+### Before opening a pull request
 
-# Lint
-pnpm lint
+Run `pnpm lint`, `pnpm test`, and `pnpm test:types`. CI runs all three plus a build,
+and the test job runs against both Nuxt 3 and Nuxt 4.
 
-# Build for publishing
-pnpm prepack
+Commits follow [conventional commits](https://www.conventionalcommits.org)
+(`feat:`, `fix:`, `docs:`, `chore:`), since the changelog is generated from them.
+
+### One thing worth knowing
+
+**Nuxt does not inject auto-imports into `node_modules`.** Code under
+`src/runtime/` must import everything explicitly from `#imports`:
+
+```ts
+import { queryCollection, useAsyncData } from '#imports'
+```
+
+A bare `queryCollection` works in this repo's fixtures, because they load the module
+from source, and then fails silently once the module is installed from npm. The
+test suite cannot catch it ([issue #2](https://github.com/poliha/nuxt-content-tags/issues/2)).
+If you touch runtime code, verify against a real install:
+
+```bash
+pnpm pack
+cd /some/scratch/nuxt-app && pnpm add /path/to/nuxt-content-tags-x.y.z.tgz
+```
+
+### Testing against the playground
+
+The playground needs `better-sqlite3`, which `@nuxt/content` requires for local
+content queries. It is already a dev dependency here, but it needs a native build,
+so allow the build script if pnpm blocks it:
+
+```bash
+pnpm approve-builds
 ```
 
 ## License
