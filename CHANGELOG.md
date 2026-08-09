@@ -1,5 +1,21 @@
 # Changelog
 
+## v0.1.1
+
+[compare changes](https://github.com/poliha/nuxt-content-tags/compare/v0.1.0...v0.1.1)
+
+### 📖 Documentation
+
+- Document collection naming, config options, api tables, and contributing ([bde2b48](https://github.com/poliha/nuxt-content-tags/commit/bde2b48))
+
+### 🤖 CI
+
+- Release workflow for tags, changelog, and main-branch triggers ([17628da](https://github.com/poliha/nuxt-content-tags/commit/17628da))
+
+### ❤️ Contributors
+
+- Peter Oliha <poliha2002@gmail.com>
+
 ## v0.1.0
 
 
