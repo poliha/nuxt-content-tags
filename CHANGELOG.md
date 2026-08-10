@@ -14,7 +14,7 @@
 
 ### ❤️ Contributors
 
-- Peter Oliha <poliha2002@gmail.com>
+- Peter Oliha
 
 ## v0.1.0
 
@@ -74,4 +74,4 @@
 
 ### ❤️ Contributors
 
-- Peter Oliha <poliha2002@gmail.com>
+- Peter Oliha
