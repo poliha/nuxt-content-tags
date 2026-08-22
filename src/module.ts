@@ -6,6 +6,7 @@ import {
   addTypeTemplate,
   hasNuxtModule,
 } from '@nuxt/kit'
+import { registerUndefinedTagCheck, type HookTarget } from './build/register-tag-check'
 
 function normalizeBasePath(basePath: string | undefined) {
   if (!basePath) {
@@ -216,6 +217,15 @@ export {}
       filePath: resolver.resolve(
         `./runtime/components/${uiVariant}/TagList.vue`,
       ),
+    })
+
+    // Both collection names are fixed today. When they become configurable
+    // they thread through here, and the check follows without further change.
+    // Nuxt types `hook` against a closed union of its own hook names, which
+    // cannot express a hook another module owns.
+    registerUndefinedTagCheck(nuxt as unknown as HookTarget, {
+      articlesCollection: 'articles',
+      tagsCollection: 'tags',
     })
 
     if (options.generatePages) {
