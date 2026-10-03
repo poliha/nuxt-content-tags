@@ -16,6 +16,8 @@
 - **Headless or Nuxt UI** -- Auto-detects Nuxt UI, falls back to plain HTML + Tailwind
 - **Server-rendered** -- Tag pages render on the server with titles and meta
   descriptions set, so crawlers see real content
+- **Undefined tags reported** -- The build names any tag slug an article
+  references that no tag definition declares
 - **Nuxt 3 + 4** -- Compatible with both major versions
 - **TypeScript** -- Full type safety and IntelliSense support
 
@@ -302,6 +304,30 @@ const { tags } = useTags('articles', {
 The filter applies to every query the composable makes, so counts, tag listings,
 and related tags all agree. The underlying utilities take it as a trailing
 argument too: `getArticlesByTag(slug, collection, filter)`.
+
+## Undefined tags
+
+Article frontmatter can reference a tag slug that has no entry in the `tags`
+collection. At runtime that fails quietly: the lookup returns nothing, the tag
+renders nowhere, and it has no tag page.
+
+The module reads `content/articles/*.md` and `content/tags/*.yml` during the
+build, and warns once:
+
+```
+WARN  [nuxt-content-tags] 2 tag slugs are referenced by articles but not defined in the tags collection.
+  - "another-missing" referenced by articles/getting-started.md
+  - "ghost-tag" referenced by articles/getting-started.md
+  These render nowhere and have no tag page. Add a definition, or remove the reference.
+```
+
+It is a warning and never fails the build. It reads the files themselves, so
+the result is the same whether or not Nuxt Content's parse cache is warm. A tag
+file counts only if it sets `slug`, since that is the field tags are looked up by.
+If there are no tag files at that path, it stays silent.
+
+In development the check runs when the server starts. Restart it to re-check
+after editing content.
 
 ## Contributing
 
