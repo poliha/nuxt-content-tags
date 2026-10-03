@@ -221,9 +221,10 @@ export {}
 
     // Both collection names are fixed today. When they become configurable
     // they thread through here, and the check follows without further change.
-    // Nuxt types `hook` against a closed union of its own hook names, which
-    // cannot express a hook another module owns.
+    // Nuxt's generic `hook` signature does not narrow to the string-keyed
+    // HookTarget a test can fake, hence the cast.
     registerUndefinedTagCheck(nuxt as unknown as HookTarget, {
+      rootDir: nuxt.options.rootDir,
       articlesCollection: 'articles',
       tagsCollection: 'tags',
     })

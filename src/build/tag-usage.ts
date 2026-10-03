@@ -1,9 +1,8 @@
 /**
- * An index of tag slugs, built as Nuxt Content parses.
+ * An index of tag slugs, built from the content files.
  *
  * It records both sides of the relationship, each with the files involved, so
- * that checks are pure functions over the index and only one subscription to
- * the parse hook is ever needed:
+ * that checks are pure functions over the index and the files are read once:
  *
  * - which slugs a tag definition declares, and where
  * - which slugs an article references, and where
@@ -33,25 +32,20 @@ export interface TagUsageCollector {
   /** Slugs referenced by an article, with the files referencing them. */
   referencedSlugs: () => TagOccurrence[]
   /**
-   * Whether any tag definition was seen. Content parsing is cached, so a run
-   * can hand over articles while the tags collection stays untouched. Reporting
-   * from that state would name every slug in the site as undefined.
+   * Whether any tag definition was seen. With none, the tags collection is
+   * missing or laid out elsewhere, and reporting would name every slug in the
+   * site as undefined.
    */
   sawTagDefinitions: () => boolean
   /** Referenced slugs that no definition declares. */
   undefinedSlugs: () => TagOccurrence[]
 }
 
-function slugOf(content: Record<string, unknown>, file?: string): string | undefined {
+function slugOf(content: Record<string, unknown>): string | undefined {
+  // The runtime looks tags up by this field alone, so a definition without it
+  // does not exist as far as the site is concerned.
   const declared = content.slug
-  if (typeof declared === 'string' && declared) {
-    return declared
-  }
-
-  // The slug is optional in a tags schema, so fall back to the filename, which
-  // is what Nuxt Content derives a data entry's key from anyway.
-  const stem = file?.split('/').pop()?.replace(/\.[^.]+$/, '')
-  return stem || undefined
+  return typeof declared === 'string' && declared ? declared : undefined
 }
 
 function add(index: Map<string, Set<string>>, slug: string, file?: string) {
@@ -83,7 +77,7 @@ export function createTagUsageCollector(
       const record = content as Record<string, unknown>
 
       if (collection === options.tagsCollection) {
-        const slug = slugOf(record, file)
+        const slug = slugOf(record)
         if (slug) {
           add(defined, slug, file)
         }

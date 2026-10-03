@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest'
 import { createTagUsageCollector } from '../src/build/tag-usage'
-import { contentFileLabel } from '../src/build/content-file'
 
 function collector() {
   return createTagUsageCollector({
@@ -39,12 +38,15 @@ describe('createTagUsageCollector', () => {
     ])
   })
 
-  it('falls back to the tag file stem when the definition declares no slug', () => {
+  it('does not count a definition without a slug, since the runtime cannot find it', () => {
     const c = collector()
+    c.record('tags', { slug: 'vue' }, 'content/tags/vue.yml')
     c.record('tags', { name: 'Nuxt' }, 'content/tags/nuxt.yml')
     c.record('articles', { tags: ['nuxt'] }, 'content/articles/a.md')
 
-    expect(c.undefinedSlugs()).toEqual([])
+    expect(c.undefinedSlugs()).toEqual([
+      { slug: 'nuxt', files: ['content/articles/a.md'] },
+    ])
   })
 
   it('ignores collections it was not asked about', () => {
@@ -65,7 +67,7 @@ describe('createTagUsageCollector', () => {
     expect(c.undefinedSlugs()).toEqual([])
   })
 
-  it('stays silent when no tag definition was parsed, so a cached tags collection cannot report every slug as undefined', () => {
+  it('stays silent when no tag definition was found, rather than report every slug as undefined', () => {
     const c = collector()
     c.record('articles', { tags: ['nuxt', 'python'] }, 'content/articles/a.md')
 
@@ -84,30 +86,6 @@ describe('createTagUsageCollector', () => {
     expect(c.undefinedSlugs()).toEqual([
       { slug: 'ghost', files: ['content/posts/a.md'] },
     ])
-  })
-})
-
-describe('contentFileLabel', () => {
-  it('strips the collection prefix that Nuxt Content puts on a file id', () => {
-    expect(
-      contentFileLabel('articles', 'articles/articles/getting-started.md', '/abs/content/articles/getting-started.md'),
-    ).toBe('articles/getting-started.md')
-  })
-
-  it('keeps an id that carries no collection prefix', () => {
-    expect(contentFileLabel('articles', 'posts/a.md', undefined)).toBe('posts/a.md')
-  })
-
-  it('does not mistake a directory sharing the collection name for the prefix', () => {
-    expect(contentFileLabel('articles', 'articlesque/a.md', undefined)).toBe('articlesque/a.md')
-  })
-
-  it('falls back to the absolute path when there is no id', () => {
-    expect(contentFileLabel('articles', undefined, '/abs/a.md')).toBe('/abs/a.md')
-  })
-
-  it('returns undefined when neither is available', () => {
-    expect(contentFileLabel('articles', undefined, undefined)).toBeUndefined()
   })
 })
 

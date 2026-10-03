@@ -311,8 +311,8 @@ Article frontmatter can reference a tag slug that has no entry in the `tags`
 collection. At runtime that fails quietly: the lookup returns nothing, the tag
 renders nowhere, and it has no tag page.
 
-The module compares the two as content is parsed and warns once at the end of
-the build:
+The module reads `content/articles/*.md` and `content/tags/*.yml` during the
+build, and warns once:
 
 ```
 WARN  [nuxt-content-tags] 2 tag slugs are referenced by articles but not defined in the tags collection.
@@ -321,13 +321,13 @@ WARN  [nuxt-content-tags] 2 tag slugs are referenced by articles but not defined
   These render nowhere and have no tag page. Add a definition, or remove the reference.
 ```
 
-It is a warning and never fails the build. It reports only when the tags
-collection was parsed in the same run, so a cached content build cannot
-mistakenly name every slug in the site.
+It is a warning and never fails the build. It reads the files themselves, so
+the result is the same whether or not Nuxt Content's parse cache is warm. A tag
+file counts only if it sets `slug`, since that is the field tags are looked up by.
+If there are no tag files at that path, it stays silent.
 
-In development the check runs on the initial build. Content edits after that
-re-parse through Nuxt Content's own hot-reload path, which does not fire the
-build hooks, so restart the dev server to re-check.
+In development the check runs when the server starts. Restart it to re-check
+after editing content.
 
 ## Contributing
 
