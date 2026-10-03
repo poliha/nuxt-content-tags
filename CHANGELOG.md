@@ -1,5 +1,21 @@
 # Changelog
 
+## v0.2.0
+
+[compare changes](https://github.com/poliha/nuxt-content-tags/compare/v0.1.1...v0.2.0)
+
+### 🚀 Enhancements
+
+- **build:** Warn when an article references an undefined tag ([#9](https://github.com/poliha/nuxt-content-tags/pull/9))
+
+### 🏡 Chore
+
+- Keep the github handle credit in the changelog ([216a8a3](https://github.com/poliha/nuxt-content-tags/commit/216a8a3))
+
+### ❤️ Contributors
+
+- Peter Oliha ([@poliha](https://github.com/poliha))
+
 ## v0.1.1
 
 [compare changes](https://github.com/poliha/nuxt-content-tags/compare/v0.1.0...v0.1.1)
